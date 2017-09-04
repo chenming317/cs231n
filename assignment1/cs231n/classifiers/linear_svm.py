@@ -34,6 +34,8 @@ def svm_loss_naive(W, X, y, reg):
         continue
       margin = scores[j] - correct_class_score + 1 # note delta = 1
       if margin > 0:
+        dW[:, j] += X[i, :].T
+        dW[:, y[i]] -= X[i, :].T
         loss += margin
 
   # Right now the loss is a sum over all training examples, but we want it
@@ -51,7 +53,8 @@ def svm_loss_naive(W, X, y, reg):
   # loss is being computed. As a result you may need to modify some of the    #
   # code above to compute the gradient.                                       #
   #############################################################################
-
+  dW /= num_train
+  dW += 2*reg*W
 
   return loss, dW
 
@@ -70,7 +73,43 @@ def svm_loss_vectorized(W, X, y, reg):
   # Implement a vectorized version of the structured SVM loss, storing the    #
   # result in loss.                                                           #
   #############################################################################
-  pass
+  num_classes = W.shape[1]
+  num_train = X.shape[0]
+
+  scores = X.dot(W)
+
+  loss_ = np.zeros(scores.shape)
+
+  loss_[range(num_train),y] = 1
+
+  t1 = scores*loss_
+
+  t1 = t1.sum(axis = 1)
+  t1 = t1.reshape(num_train,1)
+  t1 = t1.dot(np.ones([1,num_classes]))
+
+  tt = scores - t1 + 1
+
+  tt[tt < 0] = 0
+
+  tt[loss_ > 0] = 0
+
+  loss = tt.sum().sum()
+
+  tt[tt > 0] = 1
+
+  ttt = tt.sum(axis = 1)
+  ttt = ttt.reshape(num_train, 1)
+  tttt = -ttt.dot(np.ones([1, num_classes]))
+
+  tttt[loss_ == 0] = 0
+
+  tt += tttt
+
+  dW = X.T.dot(tt)
+
+  loss /= num_train
+  loss += reg * np.sum(W * W)
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
@@ -85,7 +124,8 @@ def svm_loss_vectorized(W, X, y, reg):
   # to reuse some of the intermediate values that you used to compute the     #
   # loss.                                                                     #
   #############################################################################
-  pass
+  dW /= num_train
+  dW += 2*reg*W
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################

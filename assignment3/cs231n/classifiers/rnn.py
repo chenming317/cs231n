@@ -146,7 +146,7 @@ class CaptioningRNN(object):
         if self.cell_type == 'rnn':
             h_rl, cache_rl = rnn_forward(out_embed, h0, Wx, Wh, b)
         elif self.cell_type == 'lstm':
-            pass
+            h_rl, cache_rl = lstm_forward(out_embed, h0, Wx, Wh, b)
         # (4)
         out_aff, cache_aff = temporal_affine_forward(h_rl, W_vocab, b_vocab)
         # (5)
@@ -159,7 +159,7 @@ class CaptioningRNN(object):
         if self.cell_type == 'rnn':
             dout_embed, dh0, dWx, dWh, db = rnn_backward(dh_rl, cache_rl)
         elif self.cell_type == 'lstm':
-            pass
+            dout_embed, dh0, dWx, dWh, db = lstm_backward(dh_rl, cache_rl)
         # (2)
         dW_embed = word_embedding_backward(dout_embed, cache_embed)
         # (1)
@@ -248,7 +248,7 @@ class CaptioningRNN(object):
             if self.cell_type == 'rnn':
                 next_h, cache_rnn = rnn_step_forward(out_embed[:,0,:], prev_h, Wx, Wh, b)
             elif self.cell_type == 'lstm':
-                pass
+                next_h, c0, cache_lstm = lstm_step_forward(out_embed[:,0,:], prev_h, c0, Wx, Wh, b)
             prev_h = next_h
             # (3)
             next_h = np.reshape(next_h,[next_h.shape[0],1,next_h.shape[1]])
